@@ -1,0 +1,16 @@
+Those four sections tell a complete story:
+1. Data Quality – Can management trust the data? What duplicates, missing values or inconsistencies exist?
+2. Business KPIs – How is the business performing? Revenue, orders, cancellation rate, delivery performance, etc.
+3. Trends and Anomalies – What's changing over time? Which categories are growing or declining? Are there unusual patterns?
+4. Process Inefficiency – Where is the business losing time, money or operational efficiency? Late deliveries, delays, bottlenecks, etc.
+
+
+For every major finding, aim for:
+
+Finding → Evidence → Business Impact → Recommendation
+
+For example:
+- Finding: Cancellation rate increased in September.
+- Evidence: Cancellation rate rose from 4% to 9%.
+- Business impact: More orders are being lost before fulfilment.
+- Recommendation: Investigate cancellation reasons and identify whether specific categories or regions are responsible.

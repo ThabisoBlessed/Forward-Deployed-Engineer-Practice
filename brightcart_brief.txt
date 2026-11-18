@@ -1,0 +1,35 @@
+BRIGHTCART — TECHNICAL ASSESSMENT (practice)
+
+Business context: BrightCart is an online electronics retailer operating
+across South Africa. Management wants an independent analysis of the
+last 12 months of trading (Nov 2025 - Oct 2026) to answer three questions:
+Are we growing? Where are we losing money? Which clients/areas need
+attention? You will connect to a database, analyse the data, and deliver
+a report presenting your findings.
+
+You have 3 hours. Structure your time:
+  17:00-17:20  understand the schema, profile tables, data-quality audit
+  17:20-18:50  analysis
+  18:50-19:50  write the report
+
+Deliverable: an Executive Summary, Key Findings (max 4, each with a chart
+and a "so what"), Recommendations (max 3), Caveats.
+
+TASKS
+1. Data-quality audit: duplicates, NULLs, inconsistent values. State how
+   each issue is handled.
+2. Monthly revenue trend for the last 12 months. State which order
+   statuses count as revenue.
+3. Category analysis: revenue and refund rate per category
+   (refund rate = refunded orders / all orders in that category).
+   Which categories lose the most money to refunds?
+4. Delivery vs cancelled orders: is there a pattern between how long an
+   order stayed in "shipped" status and cancellations? (Hint: use
+   payments.pay_date or order date - keep it simple, or state why this
+   can't be answered with the data available - that is also a valid finding.)
+5. At-risk revenue: orders with no matching payment record, or paid more
+   than 30 days after order date. Total amount and top 5 customers.
+6. Write the report per the structure above.
+
+RULES: solo work. State all assumptions. Any number in the report must
+be traceable to a query. Use SQLite-compatible SQL.

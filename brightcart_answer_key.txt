@@ -1,0 +1,124 @@
+BRIGHTCART PRACTICE ASSESSMENT — ANSWER KEY
+=============================================
+Open ONLY after you have submitted your own attempt.
+Every number below was verified against the dataset.
+
+------------------------------------------------------------
+TASK 1 — DATA QUALITY AUDIT
+------------------------------------------------------------
+Issues planted (expected findings):
+- 45 duplicate order_ids in orders (45 extra rows)
+- 3 duplicate customer_ids
+- NULLs: customers.city 2; payments.channel 172; payments.amount 161; payments.pay_date 161
+- Inconsistent city: 'PE' vs 'Gqeberha' (Gqeberha was formerly Port Elizabeth; treat as
+  same city), 'capetown' vs 'Cape Town'
+- Inconsistent category casing: 'audio'/'Audio', 'accessories'/'Accessories'
+  -> critical for Task 3: 'Phones' is #1 at R16.1m, but if you don't merge
+     'audio'+'Audio' and 'accessories'+'Accessories', your category ranking is wrong.
+Handling: clean views (SELECT DISTINCT; standardised city/category), NULL payments
+treated as unpaid, disclosed in caveats.
+
+Key SQL:
+  SELECT order_id, COUNT(*) FROM orders GROUP BY order_id HAVING COUNT(*)>1;
+  DROP VIEW IF EXISTS o_clean;
+  CREATE VIEW o_clean AS SELECT DISTINCT * FROM orders;
+
+------------------------------------------------------------
+TASK 2 — MONTHLY REVENUE (verified numbers)
+------------------------------------------------------------
+Assumption: revenue = order_items qty * unit_price, orders with status
+'delivered' + 'shipped' (decide and state; 'cancelled'/'refunded' excluded).
+
+Revenue by month (R):
+  2025-11  4,841,805     2026-05  4,612,840
+  2025-12  4,574,902     2026-06  4,529,752
+  2026-01  7,168,958  <- spike    2026-07  4,452,111
+  2026-02  4,413,690     2026-08  5,376,922
+  2026-03  5,576,596     2026-09  5,857,883
+  2026-04  5,896,805     2026-10  5,909,790
+
+Interpretation: Jan 2026 is a clear outlier (~R7.2m, +55% vs the R4.4-4.8m
+baseline). Worth a caveat/investigation note rather than a "growth" claim.
+Aug-Oct 2026 shows recovery toward R5.9m. Average ~R5.2m/month including Jan.
+
+Key SQL:
+  SELECT strftime('%Y-%m', o.order_date) m, SUM(i.qty*i.unit_price) revenue
+  FROM o_clean o JOIN order_items i ON i.order_id = o.order_id
+  WHERE o.status IN ('delivered','shipped') AND o.order_date >= '2025-11-01'
+  GROUP BY m ORDER BY m;
+
+------------------------------------------------------------
+TASK 3 — CATEGORY REVENUE & REFUNDS (verified)
+------------------------------------------------------------
+Trap: 'audio'/'Audio' and 'accessories'/'Accessories' must be merged first.
+Correct merged view (revenue, delivered+shipped):
+  Phones       ~R16.1m      refund rate (order-level) 4.1%
+  Audio        ~R22.5m  <- actually #1 once merged (13.9m + 8.7m)
+  Accessories  ~R18.1m      lowest refund rate ~3.0%
+  Computing    ~R6.5m       4.2%
+Refund rate by category (refunded orders / orders containing the category):
+  Audio 4.8% > Computing 4.2% > Phones 4.1% > Accessories ~3.0%
+So-what: Audio is both the biggest line AND the highest refund rate -> refunds
+in Audio alone ~= 28+28=56 refunded orders, roughly R0.4-0.6m in reversed revenue
+(estimate; state as estimate).
+
+Order-level refund-rate SQL:
+  WITH oc AS (SELECT DISTINCT o.order_id, o.status, i.product_id
+              FROM o_clean o JOIN order_items i ON i.order_id=o.order_id)
+  SELECT p.category, COUNT(*) orders_with_cat,
+         SUM(status='refunded') refunded,
+         ROUND(100.0*SUM(status='refunded')/COUNT(*),1) refund_rate
+  FROM oc JOIN products p ON p.product_id=oc.product_id
+  GROUP BY p.category ORDER BY refund_rate DESC;
+
+------------------------------------------------------------
+TASK 4 — DELIVERY TIME vs CANCELLATIONS (trap question)
+------------------------------------------------------------
+Correct answer: CANNOT be properly answered with this data.
+There is no 'shipped date' column; pay_date is payment date, not dispatch.
+'Shipped' is a status, not a timestamp -> you cannot compute how long an order
+was in transit vs cancellation.
+Full marks answer: say so explicitly, explain what's missing (dispatch/delivery
+timestamps), and propose what to collect. Do NOT force an answer from pay_date
+as if it were a delivery date.
+(Partial credit for a clearly-labelled exploratory look, e.g. cancelled vs
+delivered by channel or month, as long as you don't claim it answers the question.)
+
+------------------------------------------------------------
+TASK 5 — AT-RISK REVENUE (verified)
+------------------------------------------------------------
+Definition: delivered/shipped orders with no payment row OR paid >30 days after
+order date.
+Result: 439 orders, total at-risk ~R18.48m.
+Top 5 customers by at-risk value:
+  5062  11 orders  R643,425
+  5038  10 orders  R538,027
+  5094   8 orders  R410,341
+  5080   7 orders  R377,049
+  5017   7 orders  R356,974
+So-what: ~R18.5m of delivered revenue unpaid or 30+ days late = direct cash-flow
+risk; top 5 accounts hold ~R2.3m of it.
+Caveat to state: at-risk value is NOT confirmed debt (late-paid orders may be
+settled; missing payment rows may be reconciliation gaps).
+
+Key SQL:
+  WITH rev AS (SELECT o.order_id, o.customer_id, SUM(i.qty*i.unit_price) v
+               FROM o_clean o JOIN order_items i ON i.order_id=o.order_id
+               WHERE o.status IN ('delivered','shipped') GROUP BY o.order_id)
+  SELECT r.customer_id, COUNT(*) n, SUM(v) at_risk
+  FROM rev r LEFT JOIN payments p ON p.order_id=r.order_id
+  WHERE p.order_id IS NULL
+     OR julianday(p.pay_date)-julianday((SELECT order_date FROM o_clean
+          WHERE order_id=r.order_id)) > 30
+  GROUP BY r.customer_id ORDER BY at_risk DESC LIMIT 5;
+
+------------------------------------------------------------
+MARKING NOTES (how I will grade your attempt)
+------------------------------------------------------------
+- Numbers must match the verified values above (small rounding differences OK).
+- Category question: if you didn't merge audio/Audio, revenue ranking wrong -> capped.
+- Task 4: honest "can't be answered + what's missing" earns more than a forced answer.
+- Revenue task: must state status assumption; 'delivered'+'shipped' expected,
+  other defensible choices accepted IF stated.
+- Report: BLUF headlines, so-what in money/time/risk, no placeholders,
+  caveats section present.

@@ -1,0 +1,8 @@
+watchmedo auto-restart --patterns="*.py" --recursive -- python scripts/main.py
+
+
+
+
+Select c.city,Count(o.order_id) from orders_clean where o.status='delivered'
+Join customers_clean c using(customer_id)
+

@@ -1,0 +1,98 @@
+Fuel Data Analysis: Discovery Report
+1. Executive Summary
+The purpose of this analysis was to examine the Fuel Data environment, understand how fuel transactions are associated with vehicles, and identify potential data or business-process issues.
+The analysis identified a significant issue relating to vehicle registration changes.
+Fuel transactions received from the bank contained vehicle registrations that could not always be matched to the vehicle registrations held in the internal system.
+Further investigation showed that when certain vehicle registrations changed, the updated registration was available in the bank data but had not been captured in the internal system.
+This indicates that what initially appears to be a data-matching problem may actually be a gap in the business process for maintaining vehicle registration information.
+The issue has the potential to affect fuel transaction matching, vehicle-level reporting and the reliability of downstream analytics.
+
+2. Discovery
+Finding: Vehicle Registration Mismatch
+During analysis of fuel transactions, I identified transactions where the vehicle registration supplied by the bank did not match a registration in the internal vehicle data.
+I isolated the unmatched transactions and compared them with the existing vehicle records.
+Example
+Source
+Vehicle identifier
+Registration
+Internal system
+Vehicle 12345
+ABC123GP
+Bank fuel data
+Vehicle 12345
+XYZ789GP
+
+The vehicle appears to represent the same underlying asset, but the bank is using the new registration while the internal system still contains the previous registration.
+This prevents a straightforward registration-based match between the fuel transaction and the internal vehicle record.
+
+3. Investigation
+I investigated the exceptions rather than immediately changing the matching logic.
+The analysis indicated the following sequence:
+A vehicle exists in the internal system with its original registration.
+The vehicle registration changes.
+The new registration is captured on the bank side.
+The corresponding registration change is not captured internally.
+Subsequent fuel transactions arrive using the new registration.
+The transaction can no longer be reliably matched to the vehicle using registration alone.
+The unmatched data then flows downstream into analytics and reporting.
+This suggests that the technical data issue is a symptom of an upstream business-process gap rather than simply a reporting defect.
+
+4. Business Impact
+The potential impact extends beyond data quality.
+Transaction matching
+Fuel transactions associated with changed registrations may fail to match to the correct vehicle.
+Reporting accuracy
+Vehicle-level fuel consumption, fuel cost and usage reporting could potentially be incomplete or incorrectly attributed.
+Operational efficiency
+Employees may need to investigate and reconcile unmatched transactions manually.
+Decision-making
+If management reporting relies on the affected data, decisions could be made using incomplete vehicle-level fuel information.
+The business impact should be quantified before prioritising the remediation. For example, I would calculate:
+Percentage of fuel transactions that cannot be matched.
+Number of unique vehicles affected.
+Total fuel value represented by affected transactions.
+How long affected registrations remain unmatched.
+Whether the issue is increasing or decreasing over time.
+
+5. Root-Cause Hypothesis
+Based on the available data, my hypothesis is that there is a gap in the process responsible for maintaining vehicle registration changes.
+The bank has visibility of the updated registration, while the internal system continues to hold the historical registration.
+I would not consider the root cause confirmed from database analysis alone.
+The next step would be to validate the finding with the teams responsible for vehicle administration and fuel-card management and establish:
+Who is responsible for initiating a registration change?
+Which system is considered the source of truth?
+How does the bank receive the updated registration?
+Should the same change trigger an update internally?
+Is the process manual or automated?
+Are there validation or reconciliation controls between the two systems?
+The answers would determine whether the appropriate solution is a business-process change, system integration, automated reconciliation, or a combination of these.
+
+6. Recommendation
+Immediate
+Create an exception report that identifies bank registrations that cannot be matched to active vehicle records internally.
+This gives the business visibility of the problem while the underlying process is investigated.
+Short term
+Reconcile the affected registrations and correct the relevant internal vehicle records once they have been validated by the business owner.
+Longer term
+Reduce reliance on manual detection.
+Depending on the capabilities of the source systems, I would investigate either:
+Automatically propagating validated registration changes between systems; or
+Implementing a scheduled reconciliation that compares bank vehicle information with the internal vehicle master and alerts the appropriate team when differences are detected.
+I would also investigate whether a stable vehicle identifier other than registration can be used for system integration. A vehicle registration is an attribute that can change, so it may not be an appropriate long-term integration key.
+
+7. Proposed Control
+A useful automated data-quality control would monitor:
+Bank registration → Internal vehicle → Match status
+For example:
+Matched: Registration exists and vehicle can be identified.
+Changed: Vehicle can be identified but registration differs.
+Unmatched: No reliable corresponding vehicle can be identified.
+Potential duplicate: Registration is associated with more than one vehicle.
+These exceptions could be surfaced through a dashboard or operational report instead of waiting for the problem to become visible in downstream reporting.
+
+8. Conclusion
+The key discovery from the analysis is not simply that some registrations do not match.
+The data indicates a potential gap in the business process for maintaining vehicle registration changes across systems.
+Rather than masking the issue by changing the reporting logic, I would validate the hypothesis with the relevant process owners, quantify the financial and operational impact, and then implement the smallest practical solution that addresses the problem at source.
+This approach improves both the reliability of the data and the underlying business operation.
+

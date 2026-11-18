@@ -1,0 +1,19 @@
+Phase 1 — Data audit (30 min)**
+1. Write a data quality audit: duplicates in any table, NULL rates per column, inconsistent values (check `city`, `sector`, `status`, `method`, `category`). List every issue you find with row counts.
+
+**Phase 2 — Core analysis (90 min)**
+2. Monthly revenue trend for the last 12 months (exclude cancelled orders — decide how to treat `returned` and `pending` and state your assumption).
+3. Top 10 customers by revenue, with order counts and average order value.
+4. Delivery performance: % of deliveries late per month, average delay in days. Which months were worst?
+5. Product/category analysis: which service categories drive the most revenue, and which have the highest cancellation rates?
+6. At-risk revenue: orders delivered but with no matching payment (or paid late >30 days after order) — what's the outstanding amount per customer?
+
+**Phase 3 — Report (60 min)**
+7. Write a one-page report: Executive summary (3 bullets) → Data quality issues found → Key findings (with at least 2 charts) → 3 concrete recommendations for the client → Caveats.
+
+**Ground rules (same as the real one):**
+- State every assumption explicitly.
+- If a query gets weird results, investigate *why* before deciding it's a data problem vs. your bug — that judgment gets scored.
+
+Start the clock and go. When you're done, paste me your SQL + report and I'll mark it like Ruben would — accuracy, assumptions, and whether your findings would make sense to a non-technical client.
+
